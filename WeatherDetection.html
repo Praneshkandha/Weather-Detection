@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enhanced Weather App</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background-color: #121212;
+  color: #ffffff;
+  transition: background-image 0.5s ease;
+  background-size: cover;
+  background-position: center;
+}
+.container {
+  background-color: rgba(30, 30, 30, 0.9);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  width: 400px;
+  animation: fadeIn 1s ease-in-out;
+}
+h2 {
+  font-size: 32px;
+  color: #00bcd4;
+  margin-bottom: 25px;
+  animation: textGlow 1.5s infinite alternate;
+}
+input {
+  width: 90%;
+  padding: 14px;
+  font-size: 18px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #333;
+  color: #ffffff;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+input:focus {
+  border-color: #00bcd4;
+}
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 20px;
+  font-size: 18px;
+  background-color: #00bcd4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+button:hover {
+  background-color: #0097a7;
+}
+#weatherResult {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #b0bec5;
+}
+.autocomplete-items {
+  position: absolute;
+  background-color: #333;
+  border: 1px solid #444;
+  width: 90%;
+  max-height: 150px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  color: white;
+}
+.autocomplete-items div:hover {
+  background-color: #555;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Enhanced Weather App</h2>
+  <input type="text" id="cityInput" placeholder="Enter city name" onkeyup="getCitySuggestions()">
+  <div id="autocomplete-list" class="autocomplete-items"></div>
+  <button onclick="displayWeather()">Get Weather</button>
+  <div id="weatherResult"></div>
+</div>
+<script>
+const apiKey = '05efb9dba7fa862da7748eaec9d33544';
+const apiUrl = 'https://api.openweathermap.org/data/2.5/weather';
+const geoApiUrl = 'https://api.openweathermap.org/geo/1.0/direct';
+
+async function getCitySuggestions() {
+  const input = document.getElementById("cityInput").value;
+  if (input.length < 2) {
+    document.getElementById("autocomplete-list").innerHTML = "";
+    return;
+  }
+  const response = await fetch(`${geoApiUrl}?q=${input}&limit=5&appid=${apiKey}`);
+  const cities = await response.json();
+  let suggestions = "";
+  cities.forEach(city => {
+    suggestions += `<div onclick="selectCity('${city.name}, ${city.country}')">${city.name}, ${city.country}</div>`;
+  });
+  document.getElementById("autocomplete-list").innerHTML = suggestions;
+}
+
+function selectCity(city) {
+  document.getElementById("cityInput").value = city;
+  document.getElementById("autocomplete-list").innerHTML = "";
+}
+
+async function displayWeather() {
+  const city = document.getElementById('cityInput').value.trim();
+  if (!city) {
+    document.getElementById('weatherResult').innerHTML = "<span style='color:#ff7043;'>Please enter a city name.</span>";
+    return;
+  }
+  document.getElementById('weatherResult').innerHTML = "<span style='color:#80deea;'>Fetching data...</span>";
+  try {
+    const response = await fetch(`${apiUrl}?q=${city}&appid=${apiKey}&units=metric`);
+    const data = await response.json();
+    if (data.cod === 200) {
+      const weatherInfo = `
+        <strong>🌡 Temperature:</strong> ${data.main.temp.toFixed(2)}°C<br>
+        <strong>☁ Cloudiness:</strong> ${data.clouds.all}%<br>
+        <strong>💨 Wind Speed:</strong> ${data.wind.speed} m/s<br>
+        <strong>🌬 Pressure:</strong> ${data.main.pressure} hPa<br>
+        <strong>📍 Location:</strong> ${data.name}, ${data.sys.country}<br>`;
+      document.getElementById('weatherResult').innerHTML = weatherInfo;
+    } else {
+      document.getElementById('weatherResult').innerHTML = "<span style='color:#ff7043;'>City not found. Please try again.</span>";
+    }
+  } catch (error) {
+    document.getElementById('weatherResult').innerHTML = "<span style='color:#ff7043;'>Error fetching weather data.</span>";
+  }
+}
+</script>
+</body>
+</html>
